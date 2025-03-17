@@ -100,6 +100,21 @@ resource "aws_instance" "builder" {
   subnet_id                   = tolist(data.aws_subnets.public.ids)[0]
   associate_public_ip_address = true
 
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = tls_private_key.ssh_key.private_key_pem
+      host        = self.public_ip
+    }
+
+    inline = [
+      "echo '${tls_private_key.ssh_key.private_key_pem}' > /home/ec2-user/.ssh/id_rsa",
+      "chmod 600 /home/ec2-user/.ssh/id_rsa",
+      "echo '${tls_private_key.ssh_key.public_key_openssh}' >> /home/ec2-user/.ssh/authorized_keys"
+    ]
+  }
+
   tags = {
     Name = "builder"
   }
