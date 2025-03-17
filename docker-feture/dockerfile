@@ -1,11 +1,12 @@
 FROM python:3.9-alpine as builder
-COPY requirements.txt /
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt /app/deps
 
 FROM python:3.9-alpine
 WORKDIR /app
 COPY . /app
-COPY --from=builder /requirements.txt /
+COPY --from=builder /app/deps /usr/local/lib/python3.9/site-packages
 EXPOSE 5001
 
 # Run the application
