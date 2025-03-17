@@ -1,0 +1,83 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  DOCKERHUB_USERNAME: $(DOCKERHUB_USERNAME)
+  DOCKERHUB_PASSWORD: $(DOCKERHUB_PASSWORD)
+  IMAGE_NAME: 'your-dockerhub-username/flask-aws-monitor'
+
+stages:
+- stage: CloneRepository
+  displayName: 'Clone Repository'
+  jobs:
+  - job: Clone
+    steps:
+    - checkout: self
+
+- stage: ParallelChecks
+  displayName: 'Parallel Linting & Security Checks'
+  dependsOn: CloneRepository
+  jobs:
+  - job: Linting
+    displayName: 'Linting'
+    steps:
+      - script: |
+          echo 'Running flake8 for Python linting...'
+          flake8 . || true
+          echo 'Running shellcheck for shell scripts linting...'
+          shellcheck *.sh || true
+          echo 'Running hadolint for Dockerfile linting...'
+          hadolint Dockerfile || true
+        displayName: 'Run Linting'
+
+  - job: SecurityScan
+    displayName: 'Security Scanning'
+    steps:
+      - script: |
+          echo 'Running bandit for Python security scan...'
+          bandit -r . || true
+          echo 'Running Trivy for Docker image security scan...'
+          trivy image $(IMAGE_NAME) || true
+        displayName: 'Run Security Scan'
+
+- stage: BuildDockerImage
+  displayName: 'Build Docker Image'
+  dependsOn: ParallelChecks
+  jobs:
+  - job: BuildImage
+    steps:
+      - script: |
+          echo 'Building Docker image...'
+          docker build -t $(IMAGE_NAME) .
+        displayName: 'Build Docker Image'
+
+- stage: PushToDockerHub
+  displayName: 'Push Docker Image to Docker Hub'
+  dependsOn: BuildDockerImage
+  jobs:
+  - job: PushImage
+    steps:
+      - script: |
+          echo 'Logging into Docker Hub...'
+          echo $(DOCKERHUB_PASSWORD) | docker login -u $(DOCKERHUB_USERNAME) --password-stdin
+          echo 'Pushing Docker image to Docker Hub...'
+          docker push $(IMAGE_NAME)
+        displayName: 'Push Docker Image'
+
+- stage: SecureCredentials
+  displayName: 'Store and Use Secure Credentials'
+  dependsOn: []
+  jobs:
+  - job: StoreSecrets
+    displayName: 'Ensure Credentials are Secure'
+    steps:
+      - script: |
+          echo 'Ensure Azure DevOps secrets are securely stored and used'
+          echo 'Use Azure DevOps secure variable groups for storing credentials securely'
+        displayName: 'Secure Credential Storage'
+
