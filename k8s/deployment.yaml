@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-aws-monitor-deployment
+  labels:
+    app: flask-aws-monitor
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-aws-monitor
+  template:
+    metadata:
+      labels:
+        app: flask-aws-monitor
+    spec:
+      containers:
+      - name: flask-aws-monitor
+        image: AviBern/flask-aws-monitor:latest
+        ports:
+        - containerPort: 80
