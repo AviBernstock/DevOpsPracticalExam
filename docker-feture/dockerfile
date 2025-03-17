@@ -1,33 +1,26 @@
-# Stage 1: Build stage
 FROM python:3.9-slim as builder
 
 WORKDIR /app
 
-# Copy requirements file
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies into a virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Runtime stage
-FROM python:3.9-slim
+FROM python:3.9-alpine
 
 WORKDIR /app
 
-# Copy the virtual environment from the builder stage
-COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Set environment path to use the virtual environment
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copy application code
 COPY . .
 
-# Expose the application port
 EXPOSE 5001
 
-# Command to run the application
+# Set environment variables
+ENV AWS_ACCESS_KEY_ID="AKIAXLEKZJVVSTPGSZ6O"
+ENV AWS_SECRET_ACCESS_KEY="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"
+ENV AWS_DEFAULT_REGION="us-east-1"
+
+# Run the application
 CMD ["python", "app.py"]
