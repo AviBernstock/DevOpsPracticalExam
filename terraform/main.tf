@@ -161,28 +161,3 @@ output "security_group_id" {
   value       = data.aws_security_group.existing_sg.id
   description = "ID of the security group"
 }
-
-# Output values
-output "vpc_id" {
-  value = data.aws_vpc.default.id
-}
-
-output "subnets" {
-  value = data.aws_subnets.public.ids
-}
-
-output "security_groups" {
-  value = data.aws_security_groups.default.ids
-}
-
-output "route_tables" {
-  value = data.aws_route_tables.default.ids
-}
-
-output "internet_gateway" {
-  value = data.aws_internet_gateway.default.id
-}
-
-output "nat_gateways" {
-  value = data.aws_nat_gateways.default.ids
-}
